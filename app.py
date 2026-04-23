@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
+import torch.nn.functional as F
 from PIL import Image, ImageDraw
 from torchvision.models import ResNet50_Weights, resnet50
 from torchvision.models.detection import (
@@ -219,7 +220,15 @@ def run_fcn(
 
     start = time.perf_counter()
     with torch.inference_mode():
-        prediction = model(image_tensor)["out"][0]
+        logits = model(image_tensor)["out"]
+        # Align segmentation map size with the original image to avoid mask indexing errors.
+        logits = F.interpolate(
+            logits,
+            size=(image.height, image.width),
+            mode="bilinear",
+            align_corners=False,
+        )
+        prediction = logits[0]
     latency_ms = (time.perf_counter() - start) * 1000.0
 
     seg_map = prediction.argmax(0).detach().cpu().numpy()
