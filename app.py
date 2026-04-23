@@ -251,7 +251,9 @@ def run_fcn(
         base[mask] = (1.0 - alpha) * base[mask] + alpha * color
 
     out_image = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8))
-    summary = pd.DataFrame(class_rows).sort_values("Pixel ratio", ascending=False)
+    summary = pd.DataFrame(class_rows, columns=["Class", "Pixel ratio"])
+    if not summary.empty:
+        summary = summary.sort_values("Pixel ratio", ascending=False)
 
     stats = {
         "latency_ms": latency_ms,
